@@ -1,18 +1,13 @@
 from nomad.config.models.plugins import ParserEntryPoint
-from pydantic import Field
 
-
-class NewParserEntryPoint(ParserEntryPoint):
-    parameter: int = Field(0, description='Custom configuration parameter')
-
+class RamanParserEntryPoint(ParserEntryPoint):
     def load(self):
-        from nomad_measurements_raman.parsers.parser import NewParser
+        from nomad_measurements_raman.parsers.parser import RamanParser
 
-        return NewParser(**self.model_dump())
+        return RamanParser(**self.dict())
 
-
-parser_entry_point = NewParserEntryPoint(
-    name='NewParser',
-    description='New parser entry point configuration.',
-    mainfile_name_re=r'.*\.newmainfilename',
+parser_entry_point = RamanParserEntryPoint(
+    name='Raman Parser',
+    description='Parser for Raman Spectroscopy files.',
+    mainfile_name_re=r'^.*\.(wdf)$',
 )
