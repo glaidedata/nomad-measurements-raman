@@ -75,37 +75,57 @@ class RamanAcquisitionSetup(ArchiveSection):
 # ==========================================
 class RamanData(ArchiveSection):
     """A section to hold the Raman spectral data and coordinates."""
+    m_def = Section(
+        a_plot=[
+            dict(
+                label='Mean Spectrum',
+                x='wavenumber',
+                y='mean_spectrum',
+                lines=[dict(mode='lines')]
+            ),
+            dict(
+                label='Total Intensity Map',
+                x='x_positions',
+                y='y_positions',
+                z='intensity_map',
+                type='heatmap'
+            )
+        ]
+    )
 
     wavenumber = Quantity(
-        type=np.float64,
-        shape=['*'],
-        unit='1/cm',
+        type=np.float64, shape=['*'], unit='1/cm',
         description='The Raman shift/wavenumber array.'
     )
 
     spectrum_data = Quantity(
-        type=np.float64,
-        shape=['*'],
+        type=np.float64, shape=['*'],
         description='1D array for a single-point Raman spectrum.'
     )
 
+    mean_spectrum = Quantity(
+        type=np.float64, shape=['*'],
+        description='The averaged 1D spectrum across the entire mapping grid.'
+    )
+
+    intensity_map = Quantity(
+        type=np.float64, shape=['*', '*'],
+        description='2D map of the total spectral intensity at each spatial point.'
+    )
+
     map_data = Quantity(
-        type=np.float64,
-        shape=['*', '*', '*'],
-        description='3D array for mapped Raman spectra (e.g., [Y, X, Wavenumber]).'
+        type=np.float64, shape=['*', '*', '*'],
+        description='3D array for mapped Raman spectra (e.g., [Y, X, Wavenumber]).',
+        a_browser=dict(render=False)
     )
 
     x_positions = Quantity(
-        type=np.float64,
-        shape=['*'],
-        unit='um',
+        type=np.float64, shape=['*'], unit='um',
         description='X coordinates for mapped measurements.'
     )
 
     y_positions = Quantity(
-        type=np.float64,
-        shape=['*'],
-        unit='um',
+        type=np.float64, shape=['*'], unit='um',
         description='Y coordinates for mapped measurements.'
     )
 
@@ -201,8 +221,8 @@ class ELNRenishawRaman(BaseRamanSpectroscopy, EntryData):
             meas_time = wdf_data.metadata.get('measurement_time')
             if meas_time is not None:
                 self.acquisition_setup.exposure_time = float(meas_time)
-
-            self.acquisition_setup.scan_type = wdf_data.metadata.get('scan_type', 'Unknown')
+            raw_scan_type = wdf_data.metadata.get('scan_type', 'Unknown')
+            self.acquisition_setup.scan_type = getattr(raw_scan_type, 'name', str(raw_scan_type))
 
             # 4. Map the Matrices / Data Shapes
             raman_data = self.results[0].data
@@ -212,9 +232,16 @@ class ELNRenishawRaman(BaseRamanSpectroscopy, EntryData):
 
             if wdf_data.spectra is not None:
                 if wdf_data.spectra.ndim == 1:
+                    # Single point scan
                     raman_data.spectrum_data = wdf_data.spectra
+                    raman_data.mean_spectrum = wdf_data.spectra
                 elif wdf_data.spectra.ndim == 3:
+                    # Mapping scan
                     raman_data.map_data = wdf_data.spectra
+                    # Calculate the average spectrum across the whole 11x11 grid
+                    raman_data.mean_spectrum = np.mean(wdf_data.spectra, axis=(0, 1))
+                    # Calculate a 2D heatmap summing up the intensity at each point
+                    raman_data.intensity_map = np.sum(wdf_data.spectra, axis=2)
 
             if wdf_data.xpos is not None:
                 raman_data.x_positions = wdf_data.xpos
