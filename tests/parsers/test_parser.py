@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from nomad.datamodel.datamodel import EntryArchive, EntryMetadata
+
 from nomad_measurements_raman.parsers.parser import RamanParser
 from nomad_measurements_raman.schema_packages.schema_package import ELNRenishawRaman
 

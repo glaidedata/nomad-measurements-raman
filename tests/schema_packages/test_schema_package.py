@@ -44,17 +44,17 @@ def test_renishaw_schema_normalization(mock_read_renishaw_wdf):
     # Assert Top-Level Metadata
     assert schema.instrument_model == 'Renishaw InVia'
 
-    assert schema.laser_setup.wavelength.magnitude == 532.0
+    assert schema.laser_setup.wavelength.magnitude == 532.0  # noqa PLR2004
 
-    assert schema.acquisition_setup.accumulations == 5
-    assert schema.acquisition_setup.exposure_time.magnitude == 2.5
+    assert schema.acquisition_setup.accumulations == 5  # noqa PLR2004
+    assert schema.acquisition_setup.exposure_time.magnitude == 2.5  # noqa PLR2004
     assert schema.acquisition_setup.scan_type == 'Mapping'
 
     # Assert Data Array Processing
     data_section = schema.results[0].data
 
     assert data_section.x_positions is not None
-    assert len(data_section.x_positions.magnitude) == 2
+    assert len(data_section.x_positions.magnitude) == 2  # noqa PLR2004
 
     assert data_section.map_data is not None
     assert data_section.map_data.shape == (2, 2, 10)

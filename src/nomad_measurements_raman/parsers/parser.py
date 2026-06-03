@@ -4,6 +4,7 @@ from nomad.parsing.parser import MatchingParser
 # Import our specialized Renishaw schema
 from nomad_measurements_raman.schema_packages.schema_package import ELNRenishawRaman
 
+
 class RamanParser(MatchingParser):
     def is_mainfile(
         self,
@@ -22,7 +23,6 @@ class RamanParser(MatchingParser):
             # WDF files are binary, so we just ensure the buffer isn't completely empty.
             if buffer:
                 return True
-
 
         return False
 
