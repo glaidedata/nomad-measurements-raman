@@ -31,10 +31,11 @@ def test_renishaw_schema_normalization(mock_read_renishaw_wdf):
     archive = EntryArchive()
     archive.metadata = EntryMetadata(entry_name='test_map.wdf')
 
+    # Mock the new os_path extraction logic
     mock_context = MagicMock()
-    mock_file = MagicMock()
-    mock_file.name = 'test_map.wdf'
-    mock_context.raw_file.return_value.__enter__.return_value = mock_file
+    mock_raw_file_object = MagicMock()
+    mock_raw_file_object.os_path = '/fake/path/test_map.wdf'
+    mock_context.upload_files.raw_file_object.return_value = mock_raw_file_object
     archive.m_context = mock_context
 
     # Initialize schema and trigger normalization
@@ -44,17 +45,17 @@ def test_renishaw_schema_normalization(mock_read_renishaw_wdf):
     # Assert Top-Level Metadata
     assert schema.instrument_model == 'Renishaw InVia'
 
-    assert schema.laser_setup.wavelength.magnitude == 532.0  # noqa PLR2004
+    assert schema.laser_setup.wavelength.magnitude == 532.0  # noqa: PLR2004
 
-    assert schema.acquisition_setup.accumulations == 5  # noqa PLR2004
-    assert schema.acquisition_setup.exposure_time.magnitude == 2.5  # noqa PLR2004
+    assert schema.acquisition_setup.accumulations == 5  # noqa: PLR2004
+    assert schema.acquisition_setup.exposure_time.magnitude == 2.5  # noqa: PLR2004
     assert schema.acquisition_setup.scan_type == 'Mapping'
 
     # Assert Data Array Processing
     data_section = schema.results[0].data
 
     assert data_section.x_positions is not None
-    assert len(data_section.x_positions.magnitude) == 2  # noqa PLR2004
+    assert len(data_section.x_positions.magnitude) == 2  # noqa: PLR2004
 
     assert data_section.map_data is not None
     assert data_section.map_data.shape == (2, 2, 10)

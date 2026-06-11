@@ -3,30 +3,24 @@ from unittest.mock import MagicMock, patch
 from nomad.datamodel.datamodel import EntryArchive, EntryMetadata
 
 from nomad_measurements_raman.parsers.parser import RamanParser
-from nomad_measurements_raman.schema_packages.schema_package import ELNRenishawRaman
+from nomad_measurements_raman.schema_packages.schema_package import (
+    ELNRenishawRaman,
+    RawFileRamanData,
+)
 
 
-@patch('nomad_measurements_raman.schema_packages.schema_package.read_renishaw_wdf')
-def test_renishaw_parser(mock_read_renishaw_wdf):
-    """Verifies the parser correctly routes .wdf files to the Renishaw schema."""
+@patch('nomad_measurements_raman.parsers.parser.create_archive')
+def test_renishaw_parser(mock_create_archive):
+    """Verifies the parser correctly routes .wdf files using the Two-Archive pattern."""
 
-    mock_data = MagicMock()
-    mock_data.metadata = {'application_name': 'WiRE Test'}
-    mock_data.wavenumber = None
-    mock_data.spectra = None
-    mock_data.xpos = None
-    mock_data.ypos = None
-
-    mock_read_renishaw_wdf.return_value = mock_data
+    # Mock the reference string returned by create_archive
+    mock_create_archive.return_value = 'mocked_archive_reference'
 
     # Setup the mock NOMAD environment context
     archive = EntryArchive()
     archive.metadata = EntryMetadata(entry_name='dummy_measurement.wdf')
 
     mock_context = MagicMock()
-    mock_file = MagicMock()
-    mock_file.name = 'dummy_measurement.wdf'
-    mock_context.raw_file.return_value.__enter__.return_value = mock_file
     archive.m_context = mock_context
     logger = MagicMock()
 
@@ -34,8 +28,14 @@ def test_renishaw_parser(mock_read_renishaw_wdf):
     parser = RamanParser()
     parser.parse('path/to/dummy_measurement.wdf', archive, logger)
 
-    # Assertions
-    assert isinstance(archive.data, ELNRenishawRaman)
-    assert archive.data.data_file == 'dummy_measurement.wdf'
-    assert archive.data.instrument_model == 'Renishaw InVia'
-    assert archive.data.software_version == 'WiRE Test'
+    # Assertions for the main raw file
+    assert isinstance(archive.data, RawFileRamanData)
+    assert archive.data.measurement.m_proxy_value == 'mocked_archive_reference'
+
+    # Assertions to ensure the ELN archive was created with the correct data
+    mock_create_archive.assert_called_once()
+    entry, _, archive_name = mock_create_archive.call_args[0]
+
+    assert isinstance(entry, ELNRenishawRaman)
+    assert entry.data_file == 'dummy_measurement.wdf'
+    assert archive_name == 'dummy_measurement.archive.json'

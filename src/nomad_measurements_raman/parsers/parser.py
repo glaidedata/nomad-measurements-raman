@@ -1,6 +1,6 @@
+from nomad.datamodel.context import ServerContext
 from nomad.datamodel.datamodel import EntryArchive
 from nomad.parsing.parser import MatchingParser
-from nomad.datamodel.context import ServerContext
 from nomad_measurements.utils import create_archive
 
 # Import our specialized Renishaw schema
@@ -8,6 +8,7 @@ from nomad_measurements_raman.schema_packages.schema_package import (
     ELNRenishawRaman,
     RawFileRamanData,
 )
+
 
 class RamanParser(MatchingParser):
     def is_mainfile(
@@ -40,7 +41,7 @@ class RamanParser(MatchingParser):
         logger = logger or archive.m_context.logger
 
         # Extract the filename, handling server context paths correctly
-        data_file = mainfile.split('/')[-1]
+        data_file = mainfile.rsplit('/', maxsplit=1)[-1]
         if isinstance(archive.m_context, ServerContext):
             data_file = mainfile.split('/raw/', 1)[1]
 
@@ -57,7 +58,7 @@ class RamanParser(MatchingParser):
         entry.data_file = data_file
 
         # Trigger the reader inside the schema's normalize function FIRST
-        #entry.normalize(archive, logger)
+        # entry.normalize(archive, logger)
 
         # Create the separate editable .archive.json file to preserve ELN edits
         archive_name = f'{"".join(data_file.split(".")[:-1])}.archive.json'

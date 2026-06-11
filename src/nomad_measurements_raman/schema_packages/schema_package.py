@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
+
+# Import the base class for IEntrance instruments
+from ientrance_instruments.schema_packages.schema_package import IEntranceInstrument
 from nomad.datamodel.data import JSON, ArchiveSection, EntryData
 from nomad.datamodel.metainfo.annotations import ELNComponentEnum
 from nomad.datamodel.metainfo.basesections import Measurement, MeasurementResult
@@ -8,9 +11,6 @@ from nomad.metainfo import Quantity, SchemaPackage, Section, SubSection
 
 # Import the reader from your readers package
 from readers_ientrance import read_renishaw_wdf
-
-# Import the base class for IEntrance instruments
-from ientrance_instruments.schema_packages.schema_package import IEntranceInstrument
 
 if TYPE_CHECKING:
     from nomad.datamodel.datamodel import EntryArchive
@@ -210,7 +210,9 @@ class ELNRenishawRaman(BaseRamanSpectroscopy, EntryData):
 
         try:
             # 1. Get the absolute OS path directly without closing the file handle
-            file_path = archive.m_context.upload_files.raw_file_object(self.data_file).os_path
+            file_path = archive.m_context.upload_files.raw_file_object(
+                self.data_file
+            ).os_path
 
             wdf_data = read_renishaw_wdf(file_path)
 
@@ -271,6 +273,7 @@ class ELNRenishawRaman(BaseRamanSpectroscopy, EntryData):
 
         super().normalize(archive, logger)
 
+
 class RawFileRamanData(EntryData):
     """Placeholder for the raw WDF file to point to the generated ELN."""
 
@@ -279,7 +282,8 @@ class RawFileRamanData(EntryData):
     measurement = Quantity(
         type=ELNRenishawRaman,
         a_eln=dict(component=ELNComponentEnum.ReferenceEditQuantity),
-        description='The editable ELN archive generated from this raw file.'
+        description='The editable ELN archive generated from this raw file.',
     )
+
 
 m_package.__init_metainfo__()
