@@ -1,8 +1,13 @@
+from nomad.datamodel.context import ServerContext
 from nomad.datamodel.datamodel import EntryArchive
 from nomad.parsing.parser import MatchingParser
+from nomad_measurements.utils import create_archive
 
 # Import our specialized Renishaw schema
-from nomad_measurements_raman.schema_packages.schema_package import ELNRenishawRaman
+from nomad_measurements_raman.schema_packages.schema_package import (
+    ELNRenishawRaman,
+    RawFileRamanData,
+)
 
 
 class RamanParser(MatchingParser):
@@ -35,20 +40,29 @@ class RamanParser(MatchingParser):
     ) -> None:
         logger = logger or archive.m_context.logger
 
-        # Extract just the filename from the path
-        filename = mainfile.rsplit('/', maxsplit=1)[-1]
-        filename_lower = filename.lower()
+        # Extract the filename, handling server context paths correctly
+        data_file = mainfile.rsplit('/', maxsplit=1)[-1]
+        if isinstance(archive.m_context, ServerContext):
+            data_file = mainfile.split('/raw/', 1)[1]
+
+        filename_lower = data_file.lower()
 
         # Route to the correct Schema based on the file extension
         if filename_lower.endswith('.wdf'):
             entry = ELNRenishawRaman()
         else:
-            logger.error(f'Unsupported Raman file format: {filename}')
+            logger.error(f'Unsupported Raman file format: {data_file}')
             return
 
-        # Assign the file and attach the schema to the archive
-        entry.data_file = filename
-        archive.data = entry
+        # Assign the file name to the entry
+        entry.data_file = data_file
 
-        # Trigger the reader inside the schema's normalize function
-        entry.normalize(archive, logger)
+        # Trigger the reader inside the schema's normalize function FIRST
+        # entry.normalize(archive, logger)
+
+        # Create the separate editable .archive.json file to preserve ELN edits
+        archive_name = f'{"".join(data_file.split(".")[:-1])}.archive.json'
+        eln_ref = create_archive(entry, archive, archive_name)
+
+        # Link the raw .wdf file to the generated ELN to prevent the crash and duplication
+        archive.data = RawFileRamanData(measurement=eln_ref)

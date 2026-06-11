@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
+
+# Import the base class for IEntrance instruments
+from ientrance_instruments.schema_packages.schema_package import IEntranceInstrument
 from nomad.datamodel.data import JSON, ArchiveSection, EntryData
 from nomad.datamodel.metainfo.annotations import ELNComponentEnum
 from nomad.datamodel.metainfo.basesections import Measurement, MeasurementResult
@@ -143,6 +146,10 @@ class RamanResult(MeasurementResult):
 class BaseRamanSpectroscopy(Measurement):
     """Base class containing shared attributes for all Raman entries."""
 
+    # We define a hidden field using the custom instrument type.
+    # Its ONLY purpose is to preload the IEntranceInstrument schema
+    _instrument_schema_preload = Quantity(type=IEntranceInstrument)
+
     data_file = Quantity(
         type=str,
         a_eln=dict(component=ELNComponentEnum.FileEditQuantity),
@@ -202,10 +209,10 @@ class ELNRenishawRaman(BaseRamanSpectroscopy, EntryData):
             return
 
         try:
-            # 1. Read the file using the external reader
-            with archive.m_context.raw_file(self.data_file, 'rb') as f:
-                # We pass the file path to the reader
-                file_path = f.name
+            # 1. Get the absolute OS path directly without closing the file handle
+            file_path = archive.m_context.upload_files.raw_file_object(
+                self.data_file
+            ).os_path
 
             wdf_data = read_renishaw_wdf(file_path)
 
@@ -265,6 +272,18 @@ class ELNRenishawRaman(BaseRamanSpectroscopy, EntryData):
             raise e
 
         super().normalize(archive, logger)
+
+
+class RawFileRamanData(EntryData):
+    """Placeholder for the raw WDF file to point to the generated ELN."""
+
+    m_def = Section(label='Raw Raman Data File')
+
+    measurement = Quantity(
+        type=ELNRenishawRaman,
+        a_eln=dict(component=ELNComponentEnum.ReferenceEditQuantity),
+        description='The editable ELN archive generated from this raw file.',
+    )
 
 
 m_package.__init_metainfo__()
