@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/abbasgholami71/nomad-measurements-raman"
+Repository = "https://github.com/glaidedata/nomad-measurements-raman"
 
 [project.optional-dependencies]
 dev = [
