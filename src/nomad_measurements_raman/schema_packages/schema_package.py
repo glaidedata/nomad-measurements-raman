@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 # Import the base class for IEntrance instruments
-from ientrance_instruments.schema_packages.schema_package import IEntranceInstrument
 from nomad.datamodel.data import JSON, ArchiveSection, EntryData
 from nomad.datamodel.metainfo.annotations import ELNComponentEnum
 from nomad.datamodel.metainfo.basesections import Measurement, MeasurementResult
@@ -145,10 +144,6 @@ class RamanResult(MeasurementResult):
 # ==========================================
 class BaseRamanSpectroscopy(Measurement):
     """Base class containing shared attributes for all Raman entries."""
-
-    # We define a hidden field using the custom instrument type.
-    # Its ONLY purpose is to preload the IEntranceInstrument schema
-    _instrument_schema_preload = Quantity(type=IEntranceInstrument)
 
     data_file = Quantity(
         type=str,
