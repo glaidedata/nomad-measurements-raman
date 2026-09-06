@@ -14,7 +14,7 @@ classifiers = [
 ]
 name = "nomad-measurements-raman"
 description = "NOMAD plugin for Raman spectroscopy and AFM maps"
-version = "0.2.5"
+version = "0.2.6"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -27,7 +27,7 @@ license = { file = "LICENSE" }
 dependencies = [
     "nomad-lab>=1.4.1",
     "nomad-measurements",
-    "readers-ientrance @ git+https://github.com/glaidedata/readers-ientrance.git@v0.7.0"
+    "readers-ientrance @ git+https://github.com/glaidedata/readers-ientrance.git@v0.8.3"
 ]
 
 [project.urls]
